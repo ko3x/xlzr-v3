@@ -144,9 +144,15 @@ class XLZRBot(commands.Bot):
         guild_config = self.keyword_config.get(guild_id, self.keyword_config)
         keyword = guild_config.get("keyword", "OG")
         role_name = guild_config.get("role_name", "OG member")
+        role_id = guild_config.get("role_id")
         
-        # Find the role
-        role = discord.utils.get(member.guild.roles, name=role_name)
+        role = None
+        if role_id:
+            role = member.guild.get_role(role_id)
+        
+        if not role:
+            role = discord.utils.get(member.guild.roles, name=role_name)
+        
         if not role:
             return
         

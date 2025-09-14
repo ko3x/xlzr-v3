@@ -90,27 +90,17 @@ class VerificationCommands(commands.Cog):
     
     @commands.command(name='setkeyword')
     @commands.has_permissions(manage_guild=True)
-    async def set_keyword(self, ctx, keyword: str, *, role_name: str):
+    async def set_keyword(self, ctx, keyword: str, *, role: discord.Role):
         """Set the keyword and role for verification system"""
         guild_id = str(ctx.guild.id)
-        
-        # Check if role exists
-        role = discord.utils.get(ctx.guild.roles, name=role_name)
-        if not role:
-            embed = discord.Embed(
-                title="❌ Role Not Found",
-                description=f"The role `{role_name}` does not exist in this server.\n\nPlease create the role first or check the spelling.",
-                color=0xff0000
-            )
-            await ctx.send(embed=embed)
-            return
         
         # Update keyword configuration
         if guild_id not in self.bot.keyword_config:
             self.bot.keyword_config[guild_id] = {}
         
         self.bot.keyword_config[guild_id]['keyword'] = keyword
-        self.bot.keyword_config[guild_id]['role_name'] = role_name
+        self.bot.keyword_config[guild_id]['role_name'] = role.name
+        self.bot.keyword_config[guild_id]['role_id'] = role.id  # Store role ID for better reliability
         
         embed = discord.Embed(
             title="✅ Keyword Configuration Updated",
