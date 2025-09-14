@@ -1,43 +1,38 @@
 import discord
 from discord.ext import commands
 import re
+import shlex
 
 class ConfigCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
     
     def parse_options(self, args):
-        """Parse command options from arguments"""
+        """Parse command options from arguments with proper quote handling"""
         options = {}
-        i = 0
-        while i < len(args):
-            arg = args[i]
-            if arg.startswith('color='):
-                options['color'] = arg.split('=', 1)[1]
-            elif arg.startswith('message='):
-                # Handle quoted messages
-                if arg.count('"') >= 2:
-                    options['message'] = arg.split('=', 1)[1].strip('"')
-                else:
-                    # Multi-word message
-                    message_parts = [arg.split('=', 1)[1]]
-                    i += 1
-                    while i < len(args) and not args[i].startswith(('color=', 'gif=', 'thumbnail=')):
-                        message_parts.append(args[i])
-                        i += 1
-                    options['message'] = ' '.join(message_parts).strip('"')
-                    i -= 1
-            elif arg.startswith('gif='):
-                options['gif'] = arg.split('=', 1)[1].strip('"')
-            elif arg.startswith('thumbnail='):
-                options['thumbnail'] = arg.split('=', 1)[1]
-            elif arg.startswith('autokick='):
-                options['autokick'] = int(arg.split('=', 1)[1])
-            elif arg.startswith('autoban='):
-                options['autoban'] = int(arg.split('=', 1)[1])
-            i += 1
+        
+        # Join all args and use shlex to properly parse quoted strings
+        args_string = ' '.join(args)
+        
+        # Use regex to find key=value pairs, handling quotes properly
+        pattern = r'(\w+)=(?:"([^"]*)"|(\S+))'
+        matches = re.findall(pattern, args_string)
+        
+        for match in matches:
+            key = match[0]
+            value = match[1] if match[1] else match[2]  # Use quoted value if available, otherwise unquoted
+            
+            if key in ['autokick', 'autoban']:
+                try:
+                    options[key] = int(value)
+                except ValueError:
+                    continue
+            else:
+                options[key] = value
+        
         return options
-    
+
+
     @commands.command(name='setwelcome')
     @commands.has_permissions(manage_guild=True)
     async def set_welcome(self, ctx, channel: discord.TextChannel = None, *args):
@@ -54,7 +49,9 @@ class ConfigCommands(commands.Cog):
                            "**Placeholders:**\n"
                            "• `{mention}` - Mention user\n"
                            "• `{user}` - Username\n"
-                           "• `{server}` - Server name",
+                           "• `{server}` - Server name\n\n"
+                           "**Example:**\n"
+                           "`!setwelcome #welcome color=#095fdf message=\"Hello {mention}, welcome to {server}!\"`",
                 color=0x7289da
             )
             await ctx.send(embed=embed)
@@ -75,13 +72,26 @@ class ConfigCommands(commands.Cog):
         config['channel_id'] = channel.id
         
         if 'color' in options:
-            config['color'] = options['color']
+            # Validate hex color
+            color_value = options['color']
+            if not color_value.startswith('#'):
+                color_value = '#' + color_value
+            try:
+                int(color_value.replace('#', ''), 16)
+                config['color'] = color_value
+            except ValueError:
+                await ctx.send("❌ Invalid color format! Use hex format like #095fdf")
+                return
+                
         if 'message' in options:
             config['message'] = options['message']
         if 'gif' in options:
             config['gif'] = options['gif']
         if 'thumbnail' in options:
             config['thumbnail'] = options['thumbnail']
+        
+        # Save configuration immediately
+        self.bot.save_json("guild_configs.json", self.bot.guild_configs)
         
         embed = discord.Embed(
             title="✅ Welcome Messages Configured",
@@ -93,7 +103,8 @@ class ConfigCommands(commands.Cog):
             embed.add_field(name="Options Applied", value="\n".join([f"• {k}: {v}" for k, v in options.items()]), inline=False)
         
         await ctx.send(embed=embed)
-    
+
+
     @commands.command(name='setgoodbye')
     @commands.has_permissions(manage_guild=True)
     async def set_goodbye(self, ctx, channel: discord.TextChannel = None, *args):
@@ -109,7 +120,9 @@ class ConfigCommands(commands.Cog):
                            "• `thumbnail=avatar|server|none` - Thumbnail type\n\n"
                            "**Placeholders:**\n"
                            "• `{user}` - Username\n"
-                           "• `{server}` - Server name",
+                           "• `{server}` - Server name\n\n"
+                           "**Example:**\n"
+                           "`!setgoodbye #goodbye color=#ff0000 message=\"Goodbye {user}, thanks for being part of {server}!\"`",
                 color=0xff0000
             )
             await ctx.send(embed=embed)
@@ -130,13 +143,26 @@ class ConfigCommands(commands.Cog):
         config['channel_id'] = channel.id
         
         if 'color' in options:
-            config['color'] = options['color']
+            # Validate hex color
+            color_value = options['color']
+            if not color_value.startswith('#'):
+                color_value = '#' + color_value
+            try:
+                int(color_value.replace('#', ''), 16)
+                config['color'] = color_value
+            except ValueError:
+                await ctx.send("❌ Invalid color format! Use hex format like #ff0000")
+                return
+                
         if 'message' in options:
             config['message'] = options['message']
         if 'gif' in options:
             config['gif'] = options['gif']
         if 'thumbnail' in options:
             config['thumbnail'] = options['thumbnail']
+        
+        # Save configuration immediately
+        self.bot.save_json("guild_configs.json", self.bot.guild_configs)
         
         embed = discord.Embed(
             title="✅ Goodbye Messages Configured",
@@ -148,7 +174,8 @@ class ConfigCommands(commands.Cog):
             embed.add_field(name="Options Applied", value="\n".join([f"• {k}: {v}" for k, v in options.items()]), inline=False)
         
         await ctx.send(embed=embed)
-    
+
+
     @commands.command(name='setleveling')
     @commands.has_permissions(manage_guild=True)
     async def set_leveling(self, ctx, action=None, channel: discord.TextChannel = None, *args):
@@ -163,7 +190,9 @@ class ConfigCommands(commands.Cog):
                            "**Placeholders:**\n"
                            "• `{mention}` - Mention user\n"
                            "• `{user}` - Username\n"
-                           "• `{level}` - New level",
+                           "• `{level}` - New level\n\n"
+                           "**Example:**\n"
+                           "`!setleveling enable #level-up color=#ffd700 message=\"🎉 {mention} reached level {level}!\"`",
                 color=0xffd700
             )
             await ctx.send(embed=embed)
@@ -180,6 +209,8 @@ class ConfigCommands(commands.Cog):
         
         if action == 'disable':
             config['enabled'] = False
+            # Save configuration immediately
+            self.bot.save_json("guild_configs.json", self.bot.guild_configs)
             embed = discord.Embed(
                 title="✅ Leveling Disabled",
                 description="Auto-leveling system has been disabled",
@@ -199,9 +230,22 @@ class ConfigCommands(commands.Cog):
         config['channel_id'] = channel.id
         
         if 'color' in options:
-            config['color'] = options['color']
+            # Validate hex color
+            color_value = options['color']
+            if not color_value.startswith('#'):
+                color_value = '#' + color_value
+            try:
+                int(color_value.replace('#', ''), 16)
+                config['color'] = color_value
+            except ValueError:
+                await ctx.send("❌ Invalid color format! Use hex format like #ffd700")
+                return
+                
         if 'message' in options:
             config['message'] = options['message']
+        
+        # Save configuration immediately
+        self.bot.save_json("guild_configs.json", self.bot.guild_configs)
         
         embed = discord.Embed(
             title="✅ Leveling System Configured",
@@ -213,7 +257,8 @@ class ConfigCommands(commands.Cog):
             embed.add_field(name="Options Applied", value="\n".join([f"• {k}: {v}" for k, v in options.items()]), inline=False)
         
         await ctx.send(embed=embed)
-    
+
+
     @commands.command(name='setwarnings')
     @commands.has_permissions(manage_guild=True)
     async def set_warnings(self, ctx, action=None, channel: discord.TextChannel = None, *args):
@@ -224,7 +269,9 @@ class ConfigCommands(commands.Cog):
                 description="Usage: `!setwarnings enable #channel [options]` or `!setwarnings disable`\n\n"
                            "**Options:**\n"
                            "• `autokick=number` - Auto-kick after X warnings (1-10)\n"
-                           "• `autoban=number` - Auto-ban after X warnings (1-15)",
+                           "• `autoban=number` - Auto-ban after X warnings (1-15)\n\n"
+                           "**Example:**\n"
+                           "`!setwarnings enable #warnings autokick=3 autoban=5`",
                 color=0xff8c00
             )
             await ctx.send(embed=embed)
@@ -241,6 +288,8 @@ class ConfigCommands(commands.Cog):
         
         if action == 'disable':
             config['enabled'] = False
+            # Save configuration immediately
+            self.bot.save_json("guild_configs.json", self.bot.guild_configs)
             embed = discord.Embed(
                 title="✅ Warning System Disabled",
                 description="Warning system has been disabled",
@@ -272,6 +321,9 @@ class ConfigCommands(commands.Cog):
             else:
                 await ctx.send("❌ Auto-ban value must be between 1 and 15!")
                 return
+        
+        # Save configuration immediately
+        self.bot.save_json("guild_configs.json", self.bot.guild_configs)
         
         embed = discord.Embed(
             title="✅ Warning System Configured",
