@@ -242,13 +242,19 @@ class XLZRBot(commands.Bot):
         if not channel:
             return
         
+        message_text = config.get('message', 'Goodbye {user}! Thanks for being part of {server}.')
+        
+        # Replace placeholders - use {user} instead of {mention} for goodbye messages
+        formatted_message = message_text.format(
+            user=member.name,
+            mention=f"**{member.name}**",  # Bold name instead of mention since user left
+            server=member.guild.name
+        )
+        
         # Create goodbye embed
         embed = discord.Embed(
             title="Goodbye!",
-            description=config.get('message', 'Goodbye {user}! Thanks for being part of {server}.').format(
-                user=member.name,
-                server=member.guild.name
-            ),
+            description=formatted_message,
             color=int(config.get('color', '0xff0000').replace('#', '0x'), 16)
         )
         
@@ -266,16 +272,31 @@ class XLZRBot(commands.Bot):
         
         try:
             await channel.send(embed=embed)
+            logger.info(f"Sent goodbye message for {member.name} in {channel.name}")
         except discord.Forbidden:
             logger.warning(f"Cannot send goodbye message in {channel.name}")
     
     async def on_message(self, message):
-        """Handle message events for XP system"""
+        """Handle message events for XP system and command-only filter"""
         if message.author.bot:
             return
         
-        # XP System
         guild_id = str(message.guild.id)
+        command_config = self.guild_configs.get(guild_id, {}).get('command_only', {})
+        command_only_channels = command_config.get('channels', [])
+        
+        # Check if message is in a command-only channel
+        if message.channel.id in command_only_channels:
+            # Check if message starts with bot prefix (is a command)
+            if not message.content.startswith(self.command_prefix):
+                try:
+                    await message.delete()
+                    logger.info(f"Deleted non-command message from {message.author.name} in command-only channel #{message.channel.name}")
+                except discord.Forbidden:
+                    logger.warning(f"Cannot delete message in {message.channel.name} - missing permissions")
+                return  # Don't process XP for deleted messages
+        
+        # XP System (existing code)
         user_id = str(message.author.id)
         
         # Initialize user data if not exists
@@ -333,7 +354,8 @@ async def load_extensions(bot):
         'commands.moderation_commands',
         'commands.utility_commands',
         'commands.verification_commands',
-        'commands.picture_commands'
+        'commands.picture_commands',
+        'commands.additional_features'  # Added new features module
     ]
     
     for extension in extensions:

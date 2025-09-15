@@ -87,6 +87,17 @@ class VerificationCommands(commands.Cog):
         embed.set_footer(text="Your verification will be automatically checked daily for updates")
         
         await message.edit(embed=embed)
+        
+        tutorial_config = self.bot.guild_configs.get(guild_id, {}).get('tutorial', {})
+        if tutorial_config.get('enabled', False):
+            tutorial_channel_id = tutorial_config.get('channel_id')
+            if tutorial_channel_id:
+                tutorial_channel = ctx.guild.get_channel(tutorial_channel_id)
+                if tutorial_channel:
+                    # Get the additional features cog to send tutorial
+                    additional_features = self.bot.get_cog('AdditionalFeatures')
+                    if additional_features:
+                        await additional_features.send_tutorial_message(ctx.author, tutorial_channel)
     
     @commands.command(name='setkeyword')
     @commands.has_permissions(manage_guild=True)
