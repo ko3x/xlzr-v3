@@ -66,7 +66,9 @@ class UtilityCommands(commands.Cog):
             "`!setwelcome` - Configure welcome messages",
             "`!setgoodbye` - Configure goodbye messages", 
             "`!setleveling` - Configure auto-leveling system",
-            "`!setwarnings` - Configure warning system"
+            "`!setwarnings` - Configure warning system",
+            "`!settutorial` - Configure tutorial messages",
+            "`!setcommandonly` - Set command-only channels"
         ]
         embed.add_field(name="⚙️ Configuration", value="\n".join(config_commands), inline=False)
         
@@ -84,13 +86,13 @@ class UtilityCommands(commands.Cog):
         ]
         embed.add_field(name="📊 Utility", value="\n".join(utility_commands), inline=False)
         
-        # New Features
-        new_commands = [
+        # Verification & Special Features
+        verification_commands = [
             "`!verify <username>` - Verify Roblox account",
             "`!setkeyword <keyword> <role>` - Set verification keyword",
             "`!getpicture [@user]` - Get user's profile picture"
         ]
-        embed.add_field(name="🆕 New Features", value="\n".join(new_commands), inline=False)
+        embed.add_field(name="🔐 Verification & Features", value="\n".join(verification_commands), inline=False)
         
         embed.set_footer(text="Use !help <command> for detailed information about a specific command")
         
