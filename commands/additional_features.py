@@ -35,45 +35,38 @@ class AdditionalFeatures(commands.Cog):
                 color=color_int
             )
         else:
-            # Use default tutorial message
             embed = discord.Embed(
-                title="🎓 Welcome Tutorial",
-                description=f"Hello {user.mention}! Your verification was successful. Here's what you need to know:",
+                title="🎓 Tutorial Verifikasi",
+                description=f"@everyone 🎉 **Silahkan ubah nickname Roblox kamu dengan menambahkan OG dibelakangnya untuk mendapatkan role <@&1400519466860675072> lalu lakukan verifikasi dengan cara:**\n\n\`\`\`!verify <username roblox kamu>\`\`\`\n\n⚠️ **Ingat ya, gunakan USERNAME bukan Nickname!**\n\n📝 **Contoh:**\n\`\`\`!verify lazir1st\`\`\`\n\n🤖 **Bot akan melakukan verifikasi secara otomatis**\n\n⚡ *Buat yang merasa role OG membernya dicopot, harap verifikasi ulang!!!!*",
                 color=0x00ff7f
             )
             
             embed.add_field(
-                name="📋 Read the Rules",
-                value="Make sure to read all server rules to avoid any issues.",
+                name="📋 Baca Rules Server",
+                value="Pastikan untuk membaca semua aturan server agar tidak terjadi masalah.",
                 inline=False
             )
             
             embed.add_field(
-                name="🎭 Get Roles",
-                value="Check out the roles channel to get access to different areas of the server.",
+                name="🎭 Dapatkan Role Lainnya", 
+                value="Cek channel roles untuk mendapatkan akses ke area server yang berbeda.",
                 inline=False
             )
             
             embed.add_field(
-                name="❓ Need Help?",
-                value="Use `!help` to see all available commands and features.",
+                name="❓ Butuh Bantuan?",
+                value="Gunakan `!help` untuk melihat semua command dan fitur yang tersedia.",
                 inline=False
             )
             
             embed.add_field(
-                name="🔄 Daily Updates",
-                value="Your verification status will be automatically checked daily for any changes.",
+                name="🔄 Update Harian",
+                value="Status verifikasi kamu akan dicek otomatis setiap hari untuk perubahan.",
                 inline=False
             )
             
-            embed.set_footer(text="Enjoy your time in the server!")
-        
-        try:
-            await channel.send(embed=embed)
-            logger.info(f"Sent tutorial message for {user.name}")
-        except discord.Forbidden:
-            logger.warning(f"Cannot send tutorial message in {channel.name}")
-    
+            embed.set_footer(text="🎮 Selamat bermain di server!")
+
     @commands.command(name='settutorial')
     @commands.has_permissions(manage_guild=True)
     async def set_tutorial(self, ctx, channel: discord.TextChannel = None, *, args: str = ''):
