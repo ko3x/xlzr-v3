@@ -10,64 +10,87 @@ class AdditionalFeatures(commands.Cog):
     
     async def send_tutorial_message(self, user: discord.Member, channel: discord.TextChannel):
         """Send tutorial message after successful verification"""
-        guild_id = str(user.guild.id)
-        
-        # Get custom tutorial message or use default
-        tutorial_config = self.bot.guild_configs.get(guild_id, {}).get('tutorial', {})
-        custom_message = tutorial_config.get('message', '')
-        custom_color = tutorial_config.get('color', '#00ff7f')
-        
-        if custom_message:
-            # Use custom message with placeholders
-            message_text = custom_message.replace('{mention}', user.mention)
-            message_text = message_text.replace('{user}', user.display_name)
-            message_text = message_text.replace('{server}', user.guild.name)
+        try:
+            guild_id = str(user.guild.id)
             
-            # Convert hex color to int
-            if isinstance(custom_color, str) and custom_color.startswith('#'):
-                color_int = int(custom_color[1:], 16)
+            # Get custom tutorial message or use default
+            tutorial_config = self.bot.guild_configs.get(guild_id, {}).get('tutorial', {})
+            custom_message = tutorial_config.get('message', '')
+            custom_color = tutorial_config.get('color', '#00ff7f')
+            
+            logger.info(f"[TUTORIAL] Sending tutorial message to {user.display_name} in {channel.name}")
+            logger.info(f"[TUTORIAL] Config: {tutorial_config}")
+            
+            bot_permissions = channel.permissions_for(channel.guild.me)
+            if not bot_permissions.send_messages:
+                logger.error(f"[TUTORIAL] Bot lacks send_messages permission in {channel.name}")
+                return
+            if not bot_permissions.embed_links:
+                logger.error(f"[TUTORIAL] Bot lacks embed_links permission in {channel.name}")
+                return
+            
+            if custom_message:
+                # Use custom message with placeholders
+                message_text = custom_message.replace('{mention}', user.mention)
+                message_text = message_text.replace('{user}', user.display_name)
+                message_text = message_text.replace('{server}', user.guild.name)
+                
+                # Convert hex color to int
+                if isinstance(custom_color, str) and custom_color.startswith('#'):
+                    color_int = int(custom_color[1:], 16)
+                else:
+                    color_int = 0x00ff7f
+                
+                embed = discord.Embed(
+                    title="🎓 Welcome Tutorial",
+                    description=message_text,
+                    color=color_int
+                )
             else:
-                color_int = 0x00ff7f
+                embed = discord.Embed(
+                    title="🎓 Tutorial Verifikasi",
+                    description=f"{user.mention} 🎉 **Silahkan ubah nickname Roblox kamu dengan menambahkan OG dibelakangnya untuk mendapatkan role <@&1400519466860675072> lalu lakukan verifikasi dengan cara:**\n\n\`\`\`!verify <username roblox kamu>\`\`\`\n\n⚠️ **Ingat ya, gunakan USERNAME bukan Nickname!**\n\n📝 **Contoh:**\n\`\`\`!verify lazir1st\`\`\`\n\n🤖 **Bot akan melakukan verifikasi secara otomatis**\n\n⚡ *Buat yang merasa role OG membernya dicopot, harap verifikasi ulang!!!!*",
+                    color=0x00ff7f
+                )
+                
+                embed.add_field(
+                    name="📋 Baca Rules Server",
+                    value="Pastikan untuk membaca semua aturan server agar tidak terjadi masalah.",
+                    inline=False
+                )
+                
+                embed.add_field(
+                    name="🎭 Dapatkan Role Lainnya", 
+                    value="Cek channel roles untuk mendapatkan akses ke area server yang berbeda.",
+                    inline=False
+                )
+                
+                embed.add_field(
+                    name="❓ Butuh Bantuan?",
+                    value="Gunakan `!help` untuk melihat semua command dan fitur yang tersedia.",
+                    inline=False
+                )
+                
+                embed.add_field(
+                    name="🔄 Update Harian",
+                    value="Status verifikasi kamu akan dicek otomatis setiap hari untuk perubahan.",
+                    inline=False
+                )
+                
+                embed.set_footer(text="🎮 Selamat bermain di server!")
             
-            embed = discord.Embed(
-                title="🎓 Welcome Tutorial",
-                description=message_text,
-                color=color_int
-            )
-        else:
-            embed = discord.Embed(
-                title="🎓 Tutorial Verifikasi",
-                description=f"@everyone 🎉 **Silahkan ubah nickname Roblox kamu dengan menambahkan OG dibelakangnya untuk mendapatkan role <@&1400519466860675072> lalu lakukan verifikasi dengan cara:**\n\n\`\`\`!verify <username roblox kamu>\`\`\`\n\n⚠️ **Ingat ya, gunakan USERNAME bukan Nickname!**\n\n📝 **Contoh:**\n\`\`\`!verify lazir1st\`\`\`\n\n🤖 **Bot akan melakukan verifikasi secara otomatis**\n\n⚡ *Buat yang merasa role OG membernya dicopot, harap verifikasi ulang!!!!*",
-                color=0x00ff7f
-            )
-            
-            embed.add_field(
-                name="📋 Baca Rules Server",
-                value="Pastikan untuk membaca semua aturan server agar tidak terjadi masalah.",
-                inline=False
-            )
-            
-            embed.add_field(
-                name="🎭 Dapatkan Role Lainnya", 
-                value="Cek channel roles untuk mendapatkan akses ke area server yang berbeda.",
-                inline=False
-            )
-            
-            embed.add_field(
-                name="❓ Butuh Bantuan?",
-                value="Gunakan `!help` untuk melihat semua command dan fitur yang tersedia.",
-                inline=False
-            )
-            
-            embed.add_field(
-                name="🔄 Update Harian",
-                value="Status verifikasi kamu akan dicek otomatis setiap hari untuk perubahan.",
-                inline=False
-            )
-            
-            embed.set_footer(text="🎮 Selamat bermain di server!")
-        
-        await channel.send(embed=embed)
+            try:
+                await channel.send(embed=embed)
+                logger.info(f"[TUTORIAL] Successfully sent tutorial message to {channel.name}")
+            except discord.Forbidden:
+                logger.error(f"[TUTORIAL] No permission to send message in {channel.name}")
+            except discord.HTTPException as e:
+                logger.error(f"[TUTORIAL] HTTP error sending message: {e}")
+            except Exception as e:
+                logger.error(f"[TUTORIAL] Unexpected error sending message: {e}")
+                
+        except Exception as e:
+            logger.error(f"[TUTORIAL] Error in send_tutorial_message: {e}")
 
     @commands.command(name='settutorial')
     @commands.has_permissions(manage_guild=True)

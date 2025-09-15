@@ -88,16 +88,36 @@ class VerificationCommands(commands.Cog):
         
         await message.edit(embed=embed)
         
-        tutorial_config = self.bot.guild_configs.get(guild_id, {}).get('tutorial', {})
-        if tutorial_config.get('enabled', False):
-            tutorial_channel_id = tutorial_config.get('channel_id')
-            if tutorial_channel_id:
-                tutorial_channel = ctx.guild.get_channel(tutorial_channel_id)
-                if tutorial_channel:
-                    # Get the additional features cog to send tutorial
-                    additional_features = self.bot.get_cog('AdditionalFeatures')
-                    if additional_features:
-                        await additional_features.send_tutorial_message(ctx.author, tutorial_channel)
+        try:
+            tutorial_config = self.bot.guild_configs.get(guild_id, {}).get('tutorial', {})
+            logger.info(f"[VERIFY] Tutorial config for guild {guild_id}: {tutorial_config}")
+            
+            if tutorial_config.get('enabled', False):
+                tutorial_channel_id = tutorial_config.get('channel_id')
+                logger.info(f"[VERIFY] Tutorial enabled, channel_id: {tutorial_channel_id}")
+                
+                if tutorial_channel_id:
+                    tutorial_channel = ctx.guild.get_channel(tutorial_channel_id)
+                    logger.info(f"[VERIFY] Tutorial channel found: {tutorial_channel}")
+                    
+                    if tutorial_channel:
+                        # Get the additional features cog to send tutorial
+                        additional_features = self.bot.get_cog('AdditionalFeatures')
+                        logger.info(f"[VERIFY] AdditionalFeatures cog: {additional_features}")
+                        
+                        if additional_features:
+                            await additional_features.send_tutorial_message(ctx.author, tutorial_channel)
+                            logger.info(f"[VERIFY] Tutorial message sent for {ctx.author.display_name}")
+                        else:
+                            logger.error("[VERIFY] AdditionalFeatures cog not found")
+                    else:
+                        logger.error(f"[VERIFY] Tutorial channel not found with ID: {tutorial_channel_id}")
+                else:
+                    logger.error("[VERIFY] Tutorial channel_id not set")
+            else:
+                logger.info("[VERIFY] Tutorial not enabled or config not found")
+        except Exception as e:
+            logger.error(f"[VERIFY] Error handling tutorial message: {e}")
     
     @commands.command(name='setkeyword')
     @commands.has_permissions(manage_guild=True)
