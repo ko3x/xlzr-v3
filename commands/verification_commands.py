@@ -92,7 +92,10 @@ class VerificationCommands(commands.Cog):
             tutorial_config = self.bot.guild_configs.get(guild_id, {}).get('tutorial', {})
             logger.info(f"[VERIFY] Tutorial config for guild {guild_id}: {tutorial_config}")
             
-            if tutorial_config.get('enabled', False):
+            enabled = tutorial_config.get('enabled', True)
+            logger.info(f"[VERIFY] Tutorial enabled status: {enabled}")
+            
+            if enabled:
                 tutorial_channel_id = tutorial_config.get('channel_id')
                 logger.info(f"[VERIFY] Tutorial enabled, channel_id: {tutorial_channel_id}")
                 
@@ -115,7 +118,7 @@ class VerificationCommands(commands.Cog):
                 else:
                     logger.error("[VERIFY] Tutorial channel_id not set")
             else:
-                logger.info("[VERIFY] Tutorial not enabled or config not found")
+                logger.info("[VERIFY] Tutorial disabled by configuration")
         except Exception as e:
             logger.error(f"[VERIFY] Error handling tutorial message: {e}")
     
