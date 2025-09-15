@@ -11,11 +11,15 @@ class ConfigCommands(commands.Cog):
         """Parse command options from arguments with proper quote handling"""
         options = {}
         
-        # Join all args and use shlex to properly parse quoted strings
+        # Join all args to work with the full string
         args_string = ' '.join(args)
         
-        # Use regex to find key=value pairs, handling quotes properly
-        pattern = r'(\w+)=(?:"([^"]*)"|(\S+))'
+        # Pattern explanation:
+        # (\w+)= - captures the key followed by equals
+        # (?:"([^"]*)"|([^"\s]+(?:\s+(?![^=]*=)[^=\s]+)*)) - captures either:
+        #   - quoted string: "anything inside quotes"
+        #   - unquoted value: continues until next key=value or end
+        pattern = r'(\w+)=(?:"([^"]*)"|([^"\s]+(?:\s+(?![^=]*=)[^=\s]+)*))'
         matches = re.findall(pattern, args_string)
         
         for match in matches:
@@ -28,7 +32,7 @@ class ConfigCommands(commands.Cog):
                 except ValueError:
                     continue
             else:
-                options[key] = value
+                options[key] = value.strip()
         
         return options
 
