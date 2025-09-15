@@ -137,7 +137,7 @@ class AdditionalFeatures(commands.Cog):
         
         embed.add_field(name="Available Placeholders", value="`{mention}` `{user}` `{server}`", inline=False)
         
-        self.bot.save_guild_configs()
+        self.bot.save_json("guild_configs.json", self.bot.guild_configs)
         
         await ctx.send(embed=embed)
     
@@ -212,6 +212,8 @@ class AdditionalFeatures(commands.Cog):
                 embed.add_field(name="Active Channels", value="\n".join(channel_list) if channel_list else "None", inline=False)
             else:
                 embed.add_field(name="Status", value="No command-only channels configured", inline=False)
+        
+        self.bot.save_json("guild_configs.json", self.bot.guild_configs)
         
         await ctx.send(embed=embed)
 
