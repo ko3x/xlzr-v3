@@ -66,6 +66,8 @@ class AdditionalFeatures(commands.Cog):
             )
             
             embed.set_footer(text="🎮 Selamat bermain di server!")
+        
+        await channel.send(embed=embed)
 
     @commands.command(name='settutorial')
     @commands.has_permissions(manage_guild=True)
