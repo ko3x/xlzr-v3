@@ -63,14 +63,33 @@ class UtilityCommands(commands.Cog):
         
         # Configuration Commands
         config_commands = [
-            "`!setwelcome` - Configure welcome messages",
-            "`!setgoodbye` - Configure goodbye messages", 
+            "`!setwelcome` - Configure welcome messages with placeholders",
+            "`!setgoodbye` - Configure goodbye messages with placeholders", 
             "`!setleveling` - Configure auto-leveling system",
             "`!setwarnings` - Configure warning system",
-            "`!settutorial` - Configure tutorial messages",
-            "`!setcommandonly` - Set command-only channels"
+            "`!settutorial` - Configure auto tutorial after verification",
+            "`!setcommandonly` - Set channels to only allow bot commands"
         ]
         embed.add_field(name="⚙️ Configuration", value="\n".join(config_commands), inline=False)
+        
+        # Detailed tutorial configuration examples
+        tutorial_examples = [
+            "**Tutorial Configuration:**",
+            "`!settutorial #channel enabled=true` - Enable tutorial in channel",
+            "`!settutorial message=\"Welcome {mention}!\"` - Set custom message",
+            "`!settutorial color=#ff0000` - Set embed color",
+            "**Placeholders:** `{mention}`, `{user}`, `{server}`"
+        ]
+        embed.add_field(name="📚 Tutorial Setup", value="\n".join(tutorial_examples), inline=False)
+        
+        # Command-only channel examples
+        command_filter_examples = [
+            "**Command-Only Channels:**",
+            "`!setcommandonly #self-verify true` - Enable command filter",
+            "`!setcommandonly #channel false` - Disable command filter",
+            "Only messages starting with `!` will be allowed"
+        ]
+        embed.add_field(name="🚫 Channel Filters", value="\n".join(command_filter_examples), inline=False)
         
         # Moderation Commands
         mod_commands = [
