@@ -32,15 +32,39 @@ class ConfigCommands(commands.Cog):
         
         return options
 
-
     @commands.command(name='setwelcome')
     @commands.has_permissions(manage_guild=True)
-    async def set_welcome(self, ctx, channel: discord.TextChannel = None, *args):
+    async def set_welcome(self, ctx, *args):
         """Configure welcome messages"""
-        if not channel:
+        # Parse arguments to find channel and options
+        channel = None
+        options_args = []
+        
+        # Check if first argument is a channel mention or ID
+        if args:
+            # Try to convert first argument to channel
+            try:
+                if args[0].startswith('<#') and args[0].endswith('>'):
+                    channel_id = int(args[0][2:-1])
+                    channel = ctx.guild.get_channel(channel_id)
+                elif args[0].startswith('#'):
+                    channel_name = args[0][1:]
+                    channel = discord.utils.get(ctx.guild.text_channels, name=channel_name)
+                elif args[0].isdigit():
+                    channel = ctx.guild.get_channel(int(args[0]))
+                
+                if channel:
+                    options_args = args[1:]  # Rest are options
+                else:
+                    options_args = args  # All are options, use current channel
+            except (ValueError, IndexError):
+                options_args = args  # All are options, use current channel
+        
+        # If no channel found and no options, show help
+        if not channel and not options_args:
             embed = discord.Embed(
                 title="Welcome Configuration",
-                description="Usage: `!setwelcome #channel [options]`\n\n"
+                description="Usage: `!setwelcome #channel [options]` or `!setwelcome [options]` (uses current channel)\n\n"
                            "**Options:**\n"
                            "• `color=#hexcode` - Set embed color\n"
                            "• `message=\"text\"` - Custom message\n"
@@ -50,12 +74,17 @@ class ConfigCommands(commands.Cog):
                            "• `{mention}` - Mention user\n"
                            "• `{user}` - Username\n"
                            "• `{server}` - Server name\n\n"
-                           "**Example:**\n"
-                           "`!setwelcome #welcome color=#095fdf message=\"Hello {mention}, welcome to {server}!\"`",
+                           "**Examples:**\n"
+                           "`!setwelcome #welcome color=#095fdf message=\"Hello {mention}, welcome to {server}!\"`\n"
+                           "`!setwelcome color=#095fdf message=\"Hello {mention}!\"`",
                 color=0x7289da
             )
             await ctx.send(embed=embed)
             return
+        
+        # Use current channel if no channel specified
+        if not channel:
+            channel = ctx.channel
         
         guild_id = str(ctx.guild.id)
         if guild_id not in self.bot.guild_configs:
@@ -65,7 +94,7 @@ class ConfigCommands(commands.Cog):
             self.bot.guild_configs[guild_id]['welcome'] = {}
         
         config = self.bot.guild_configs[guild_id]['welcome']
-        options = self.parse_options(args)
+        options = self.parse_options(options_args)
         
         # Update configuration
         config['enabled'] = True
@@ -104,15 +133,39 @@ class ConfigCommands(commands.Cog):
         
         await ctx.send(embed=embed)
 
-
     @commands.command(name='setgoodbye')
     @commands.has_permissions(manage_guild=True)
-    async def set_goodbye(self, ctx, channel: discord.TextChannel = None, *args):
+    async def set_goodbye(self, ctx, *args):
         """Configure goodbye messages"""
-        if not channel:
+        # Parse arguments to find channel and options
+        channel = None
+        options_args = []
+        
+        # Check if first argument is a channel mention or ID
+        if args:
+            # Try to convert first argument to channel
+            try:
+                if args[0].startswith('<#') and args[0].endswith('>'):
+                    channel_id = int(args[0][2:-1])
+                    channel = ctx.guild.get_channel(channel_id)
+                elif args[0].startswith('#'):
+                    channel_name = args[0][1:]
+                    channel = discord.utils.get(ctx.guild.text_channels, name=channel_name)
+                elif args[0].isdigit():
+                    channel = ctx.guild.get_channel(int(args[0]))
+                
+                if channel:
+                    options_args = args[1:]  # Rest are options
+                else:
+                    options_args = args  # All are options, use current channel
+            except (ValueError, IndexError):
+                options_args = args  # All are options, use current channel
+        
+        # If no channel found and no options, show help
+        if not channel and not options_args:
             embed = discord.Embed(
                 title="Goodbye Configuration",
-                description="Usage: `!setgoodbye #channel [options]`\n\n"
+                description="Usage: `!setgoodbye #channel [options]` or `!setgoodbye [options]` (uses current channel)\n\n"
                            "**Options:**\n"
                            "• `color=#hexcode` - Set embed color\n"
                            "• `message=\"text\"` - Custom message\n"
@@ -121,12 +174,17 @@ class ConfigCommands(commands.Cog):
                            "**Placeholders:**\n"
                            "• `{user}` - Username\n"
                            "• `{server}` - Server name\n\n"
-                           "**Example:**\n"
-                           "`!setgoodbye #goodbye color=#ff0000 message=\"Goodbye {user}, thanks for being part of {server}!\"`",
+                           "**Examples:**\n"
+                           "`!setgoodbye #goodbye color=#ff0000 message=\"Goodbye {user}, thanks for being part of {server}!\"`\n"
+                           "`!setgoodbye color=#ff0000 message=\"Goodbye {user}!\"`",
                 color=0xff0000
             )
             await ctx.send(embed=embed)
             return
+        
+        # Use current channel if no channel specified
+        if not channel:
+            channel = ctx.channel
         
         guild_id = str(ctx.guild.id)
         if guild_id not in self.bot.guild_configs:
@@ -136,7 +194,7 @@ class ConfigCommands(commands.Cog):
             self.bot.guild_configs[guild_id]['goodbye'] = {}
         
         config = self.bot.guild_configs[guild_id]['goodbye']
-        options = self.parse_options(args)
+        options = self.parse_options(options_args)
         
         # Update configuration
         config['enabled'] = True
@@ -174,7 +232,6 @@ class ConfigCommands(commands.Cog):
             embed.add_field(name="Options Applied", value="\n".join([f"• {k}: {v}" for k, v in options.items()]), inline=False)
         
         await ctx.send(embed=embed)
-
 
     @commands.command(name='setleveling')
     @commands.has_permissions(manage_guild=True)
@@ -257,7 +314,6 @@ class ConfigCommands(commands.Cog):
             embed.add_field(name="Options Applied", value="\n".join([f"• {k}: {v}" for k, v in options.items()]), inline=False)
         
         await ctx.send(embed=embed)
-
 
     @commands.command(name='setwarnings')
     @commands.has_permissions(manage_guild=True)

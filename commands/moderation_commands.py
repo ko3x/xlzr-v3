@@ -1,10 +1,23 @@
 import discord
 from discord.ext import commands
 from datetime import datetime
+import json
 
 class ModerationCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.load_warnings()
+    
+    def load_warnings(self):
+        try:
+            with open("user_warnings.json", "r") as file:
+                self.bot.user_warnings = json.load(file)
+        except FileNotFoundError:
+            self.bot.user_warnings = {}
+    
+    def save_json(self, filename, data):
+        with open(filename, "w") as file:
+            json.dump(data, file, indent=4)
     
     @commands.command(name='warn')
     @commands.has_permissions(moderate_members=True)
@@ -42,6 +55,8 @@ class ModerationCommands(commands.Cog):
         
         self.bot.user_warnings[guild_id][user_id].append(warning_data)
         warning_count = len(self.bot.user_warnings[guild_id][user_id])
+        
+        self.save_json("user_warnings.json", self.bot.user_warnings)
         
         # Create warning embed
         embed = discord.Embed(
